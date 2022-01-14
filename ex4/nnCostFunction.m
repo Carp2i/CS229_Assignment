@@ -62,24 +62,83 @@ Theta2_grad = zeros(size(Theta2));
 %               and Theta2_grad from Part 2.
 %
 
+% Part 1, implement
+a1 = [ones(m,1) X];
+z2 = Theta1 * a1';
+a2 = sigmoid(z2);
+a2 = [ones(1, m); a2];
+z3 = Theta2 * a2;
+a3 = sigmoid(z3);
+% [~, h] = max(a2)
+% h = h';
 
 
+% a for loop to convert the y-label to one-hot vector
+y_vec = zeros(num_labels, m);
+for i = 1:m
+    y_vec(y(i),i) = 1;
+end
 
+% compute the cost function J without regularzation
+for i = 1:m
+J = J + sum(-y_vec(:,i).*log(a3(:,i))-(1-y_vec(:,i)).*log(1-a3(:,i)));
+end
+J = J/m;
 
+% add the term of regularization
+J = J + lambda/(2*m)*(sum(sum(Theta1(:,2:end).^2))+sum(sum(Theta2(:,2:end).^2)));
 
+% Part 2: backward propagation
+% =========================================================
+Delta1 = zeros(size(Theta1));
+Delta2 = zeros(size(Theta2));
+for i = 1:m
+    delta3 =a3(:,i) - y_vec(:,i);
+    temp = (Theta2'*delta3);
+    delta2 = temp(2:end,:).*sigmoidGradient(z2(:,i));
+    
+    Delta2 = Delta2 + delta3 * a2(:,i)';
+    
+    Delta1 = Delta1 + delta2 * a1(i,:);
+end
 
+Theta2_grad = Delta2/m;
+Theta1_grad = Delta1/m;
+% =========================================================
+% backward propagation  
+% %Δ的元素个数应该和对应的theta中的元素的个数相同  
+% Delta1 = zeros(size(Theta1));  
+% Delta2 = zeros(size(Theta2));  
+% for i=1:m,  
+%     delta3 = a3(:,i) - y_vect(:,i);  
+%     T=(Theta2'*delta3);
+%     %注意这里的δ是不包含bias unit的delta的，毕竟bias unit永远是1，  
+%     %不需要计算delta, 下面的2:end,: 过滤掉了bias unit相关值  
+%     delta2 = T(2:end,:).*sigmoidGradient(z2(:,i));  
+%     %移除bias unit上的delta2，但是由于上面sigmoidGradient式子中  
+%     %的z，本身不包含bias unit，所以下面的过滤不必要，注释掉。  
+%     %delta2 = delta2(2:end);  
+%     Delta2 =Delta2+ delta3 *a2(:,i)';
+% 
+%     %第一层的input是一行一行的，和后面的结构不一样，后面是一列作为一个example  
+%     Delta1 =Delta1+ delta2 * a1(i,:);  
+% end;  
+% 
+% %总结一下，δ不包含bias unit的偏差值，Δ对跟θ对应的，用来计算每个θ  
+% %后面的偏导数的，所以Δ包含bias unit的θ  
+% Theta2_grad = Delta2/m;  
+% Theta1_grad = Delta1/m;
+% ===========================================================
+% Part 3, add the regularization term
 
-
-
-
-
-
-
-
-
-
-
-
+D2 = lambda/m*Theta2(:,2:end);
+D1 = lambda/m*Theta1(:,2:end);
+D2 = [zeros(num_labels,1) D2];
+D1 = [zeros(hidden_layer_size,1) D1];
+Theta1_grad = Theta1_grad + D1;
+Theta2_grad = Theta2_grad + D2;
+% Theta2_grad(:,2:end) = Theta2_grad(:,2:end) + lambda * Theta2(:,2:end) / m;  
+% Theta1_grad(:,2:end) = Theta1_grad(:,2:end) + lambda * Theta1(:,2:end) / m;  
 % -------------------------------------------------------------
 
 % =========================================================================
